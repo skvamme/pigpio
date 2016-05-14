@@ -14,6 +14,7 @@ init() ->
         {ok,Socket} = gen_tcp:connect(?PIGPIO_IP, ?PIGPIO_PORT, [binary,{packet, 0}]),
         timer:sleep(500),
         ok = gen_tcp:send(Socket,c(hver)),
+        ok = gen_tcp:send(Socket,c(setpullupdown,3,0)),
         timer:send_interval(10*1000, {timer}),
         loop(Socket).
 
@@ -34,4 +35,8 @@ loop(Socket) ->
 % pigpio commands
 %******************************************************************************
 c(hver) -> <<17:?UINT,0:?UINT,0:?UINT,0:?UINT>>.
-c(read,Gpio) -> <<3:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>.
+c(read,Gpio) -> <<3:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>;
+c(getmode,Gpio) -> <<1:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>.
+c(setmode,Gpio,Mode) -> <<0:?UINT,Gpio:?UINT,Mode:?UINT,0:?UINT>>;
+c(write,Gpio,Level) -> <<4:?UINT,Gpio:?UINT,Level:?UINT,0:?UINT>>;
+c(setpullupdown,Gpio,Pud) -> <<2:?UINT,Gpio:?UINT,Pud:?UINT,0:?UINT>>.
