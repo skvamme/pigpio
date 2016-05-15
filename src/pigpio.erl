@@ -12,9 +12,9 @@ init() ->
         io:format("New process: ~p~n", [?MODULE]),
         inets:start(),
         {ok,Socket} = gen_tcp:connect(?PIGPIO_IP, ?PIGPIO_PORT, [binary,{packet, 0}]),
-        timer:sleep(500),
         ok = gen_tcp:send(Socket,c(hver)),
-        ok = gen_tcp:send(Socket,c(setpullupdown,3,0)),
+        ok = gen_tcp:send(Socket,c(setmode,3,0) ),
+        ok = gen_tcp:send(Socket,c(setpullupdown,3,1)),
         timer:send_interval(10*1000, {timer}),
         loop(Socket).
 
@@ -22,14 +22,34 @@ loop(Socket) ->
         receive
                 {timer} -> ok = gen_tcp:send(Socket,c(read,3)),
                         ?MODULE:loop(Socket);
-                {tcp,_,<<Command:?UINT,P1:?UINT,P2:?UINT,P3:?UINT>>} ->
-                        io:format("~p got msg: ~p, ~p, ~p, ~p~n",[?MODULE,Command,P1,P2,P3]),
+                {tcp,_,Data} ->
+                        parse(Data),
                         ?MODULE:loop(Socket);
                 Any -> io:format("~p got unknown msg: ~p~n",[?MODULE, Any]),
                         ?MODULE:loop(Socket)
  %               after 60*1000 -> exit(timeout) % Uncomment if you want to restart this module if silent for too long
         end.
 
+%******************************************************************************
+% pigpio response
+%******************************************************************************
+parse(<<>>) -> ok;
+parse(<<0:?UINT,_P1:?UINT,_P2:?UINT,P3:?UINT,Rest/binary>>) ->
+         io:format("setmode ~p~n",[P3]),
+         parse(Rest);
+parse(<<1:?UINT,_P1:?UINT,_P2:?UINT,P3:?UINT,Rest/binary>>) ->
+         io:format("getmode ~p~n",[P3]),
+         parse(Rest);
+parse(<<2:?UINT,_P1:?UINT,_P2:?UINT,P3:?UINT,Rest/binary>>) ->
+         io:format("setpullupdown ~p~n",[P3]),
+         parse(Rest);
+parse(<<3:?UINT,_P1:?UINT,_P2:?UINT,P3:?UINT,Rest/binary>>) ->
+         io:format("read ~p~n",[P3]),
+         parse(Rest);
+parse(<<17:?UINT,_P1:?UINT,_P2:?UINT,P3:?UINT,Rest/binary>>) ->
+         io:format("hver ~p~n",[P3]),
+         parse(Rest);
+parse(_) -> ok.
 
 %******************************************************************************
 % pigpio commands
@@ -37,6 +57,6 @@ loop(Socket) ->
 c(hver) -> <<17:?UINT,0:?UINT,0:?UINT,0:?UINT>>.
 c(read,Gpio) -> <<3:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>;
 c(getmode,Gpio) -> <<1:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>.
-c(setmode,Gpio,Mode) -> <<0:?UINT,Gpio:?UINT,Mode:?UINT,0:?UINT>>;
+c(setmode,Gpio,Mode) -> <<0:?UINT,Gpio:?UINT,Mode:?UINT,0:?UINT>>; % Input = 0, Output = 1
 c(write,Gpio,Level) -> <<4:?UINT,Gpio:?UINT,Level:?UINT,0:?UINT>>;
-c(setpullupdown,Gpio,Pud) -> <<2:?UINT,Gpio:?UINT,Pud:?UINT,0:?UINT>>.
+c(setpullupdown,Gpio,Pud) -> <<2:?UINT,Gpio:?UINT,Pud:?UINT,0:?UINT>>. % Off = 0, Down = 1, Up = 2
