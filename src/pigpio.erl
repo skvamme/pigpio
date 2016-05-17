@@ -25,8 +25,8 @@ loop(Socket) ->
                         parse(Socket,Data),
                         ?MODULE:loop(Socket);
                 {kwh,Sec} when Sec > 0 -> 
-                        Kw = 3600000 / Sec,
-                        io:format("kW: ~p~n",[Kw]),
+                        W = 3600000000 div Sec,
+                        io:format("W: ~p~n",[W]),
                         ?MODULE:loop(Socket);
                 Any -> io:format("~p got unknown msg: ~p~n",[?MODULE, Any]),
                         ?MODULE:loop(Socket)
