@@ -13,7 +13,7 @@ init() ->
         {ok,Socket} = gen_tcp:connect(?PIGPIO_IP, ?PIGPIO_PORT, [binary,{packet, 0}]),
         ok = gen_tcp:send(Socket,c(setmode,25,0)),
         ok = gen_tcp:send(Socket,c(getmode,25)),
-        callback:make(self(),33554432), % Start a callback to monitor pin 25 on a dedicated socket
+        %callback:make(self(),33554432), % Start a callback to monitor pin 25 on a dedicated socket
         timer:send_interval(1000, {timer}),
         loop(Socket).
 
