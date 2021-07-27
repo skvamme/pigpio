@@ -1,7 +1,7 @@
 -module(pigpio).
 -author(skvamme).
 -export([start/0,init/0,loop/1]).
--define(PIGPIO_IP,"192.168.0.20").
+-define(PIGPIO_IP,"127.0.0.1").
 -define(PIGPIO_PORT,8888).
 -define(UINT,32/little).
 
@@ -11,16 +11,16 @@ init() ->
         io:format("New process: ~p~n", [?MODULE]),
         inets:start(),
         {ok,Socket} = gen_tcp:connect(?PIGPIO_IP, ?PIGPIO_PORT, [binary,{packet, 0}]),
-        ok = gen_tcp:send(Socket,c(setmode,25,0)),
-        ok = gen_tcp:send(Socket,c(getmode,25)),
-        callback:make(self(),33554432), % Start a callback to monitor pin 25 on a dedicated socket
-        %timer:send_interval(10*1000, {timer}),
+        ok = gen_tcp:send(Socket,c(setmode,4,0)),
+        ok = gen_tcp:send(Socket,c(getmode,4)),
+        %callback:make(self(),33554432), % Start a callback to monitor pin 25 on a dedicated socket
+        timer:send_interval(1000, {timer}),
         loop(Socket).
 
 loop(Socket) ->
         receive
-                % {timer} -> ok = gen_tcp:send(Socket,c(br1)),
-                %         ?MODULE:loop(Socket);
+                {timer} -> ok = gen_tcp:send(Socket,c(br1)),
+                         ?MODULE:loop(Socket);
                 {tcp,Socket,Data} ->
                         parse(Socket,Data),
                         ?MODULE:loop(Socket);
@@ -62,8 +62,8 @@ parse(_Socket,Response) -> io:format("Error: ~w~n",[Response]).
 %******************************************************************************
 % pigpio commands
 %******************************************************************************
-%c(hver) -> <<17:?UINT,0:?UINT,0:?UINT,0:?UINT>>;
-%c(br1) -> <<10:?UINT,0:?UINT,0:?UINT,0:?UINT>>;
+c(hver) -> <<17:?UINT,0:?UINT,0:?UINT,0:?UINT>>;
+c(br1) -> <<10:?UINT,0:?UINT,0:?UINT,0:?UINT>>.
 c(read,Gpio) -> <<3:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>;
 c(getmode,Gpio) -> <<1:?UINT,Gpio:?UINT,0:?UINT,0:?UINT>>.
 c(setmode,Gpio,Mode) -> <<0:?UINT,Gpio:?UINT,Mode:?UINT,0:?UINT>>; % Input = 0, Output = 1
