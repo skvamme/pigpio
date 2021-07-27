@@ -1,7 +1,7 @@
 -module(callback).
 -author(skvamme).
 -export([make/2,init/2,loop/4]).
--define(PIGPIO_IP,"192.168.0.20").
+-define(PIGPIO_IP,"127.0.0.1").
 -define(PIGPIO_PORT,8888).
 
 make(Parent,Bits) -> 
