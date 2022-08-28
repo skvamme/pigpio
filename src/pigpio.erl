@@ -1,6 +1,6 @@
 -module(pigpio).
 -author(skvamme).
-%-export([start/0,init/0,loop/1]).
+%-export([start/0,init/0,loop/1]). 
 -compile(export_all).
 -define(PIGPIO_IP,"127.0.0.1").
 -define(PIGPIO_PORT,8888).
