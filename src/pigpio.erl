@@ -26,6 +26,8 @@ loop(Socket) ->
                          ?MODULE:loop(Socket);                          % to find the upper limit
                 {servo_pos,Gpio,Pos} -> ok = gen_tcp:send(Socket,servo(Gpio,Pos)), 
                          ?MODULE:loop(Socket);                        
+                {servo_off,Gpio} -> ok = gen_tcp:send(Socket,servo(Gpio,0)), % Off
+                         ?MODULE:loop(Socket);                          
                 {tcp,Socket,Data} ->
                         parse(Socket,Data),
                         ?MODULE:loop(Socket);
